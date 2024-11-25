@@ -4,6 +4,8 @@ services:
   mysql:
     image: mysql:8.0
     container_name: airflow_mysql
+    build:
+      context: ./mysql_all/
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: airflow
@@ -13,6 +15,8 @@ services:
       - "3306:3306"
     volumes:
       - ./mysql_data:/var/lib/mysql
+      - ./mysql_all/data_warehouse_netflix.sql:/docker-entrypoint-initdb.d/data_warehouse_netflix.sql
+      - ./mysql_all/db_movies_netflix_transact.sql:/docker-entrypoint-initdb.d/db_movies_netflix_transact.sql
     networks:
       - airflow_network
 
@@ -51,6 +55,18 @@ services:
     command: "webserver"
     networks:
       - airflow_network
+
+  airflow-init-conn:
+      build:
+        context: ./airflow_all
+      container_name: airflow_init_conn
+      depends_on:
+        - airflow-webserver
+      volumes:
+        - ./init_airflow_connections.sh:/init_airflow_connections.sh
+      entrypoint: ["bash", "/init_airflow_connections.sh"]
+      networks:
+        - airflow_network
 
   airflow-scheduler:
     build:
