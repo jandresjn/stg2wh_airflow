@@ -1,0 +1,40 @@
+# Python cache files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.env
+
+# Logs
+logs/
+*.log
+
+# Airflow SQLite database (local use only, if applicable)
+airflow.db
+airflow.sqlite
+
+# Airflow task instance logs
+airflow_all/logs/
+
+# Docker specific files
+*.env
+docker-compose.override.yml
+.env
+
+# MySQL data directory
+mysql_data/
+
+# Jupyter Notebook checkpoints (if applicable)
+.ipynb_checkpoints/
+
+# Ignore sensitive files
+secrets.json
+credentials.json
+
+# Ignore IDE-specific settings
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db

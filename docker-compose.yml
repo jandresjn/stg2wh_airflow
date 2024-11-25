@@ -1,0 +1,82 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: airflow_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: airflow
+      MYSQL_USER: airflow
+      MYSQL_PASSWORD: airflow
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      - airflow_network
+
+  airflow-init:
+    build:
+      context: ./airflow_all
+    container_name: airflow_init
+    depends_on:
+      - mysql
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: mysql+mysqldb://airflow:airflow@mysql:3306/airflow
+    command: ["db", "init"]
+    restart: "no"  # Solo se ejecuta una vez
+    networks:
+      - airflow_network
+
+
+  airflow-webserver:
+    build:
+      context: ./airflow_all
+    container_name: airflow_webserver
+    depends_on:
+      - mysql
+      - airflow-init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: mysql+mysqldb://airflow:airflow@mysql:3306/airflow
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow_all/dags:/opt/airflow/dags
+      - ./airflow_all/logs:/opt/airflow/logs
+      - ./airflow_all/plugins:/opt/airflow/plugins
+      - ./airflow_all/config/airflow.cfg:/opt/airflow/airflow.cfg
+    command: "webserver"
+    networks:
+      - airflow_network
+
+  airflow-scheduler:
+    build:
+      context: ./airflow_all
+    container_name: airflow_scheduler
+    depends_on:
+      - mysql
+      - airflow-init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: mysql+mysqldb://airflow:airflow@mysql:3306/airflow
+    volumes:
+      - ./airflow_all/dags:/opt/airflow/dags
+      - ./airflow_all/logs:/opt/airflow/logs
+      - ./airflow_all/plugins:/opt/airflow/plugins
+      - ./airflow_all/config/airflow.cfg:/opt/airflow/airflow.cfg
+    command: "scheduler"
+    networks:
+      - airflow_network
+
+volumes:
+  mysql_data:
+    driver: local
+  logs:
+    driver: local
+
+networks:
+  airflow_network:
+    driver: bridge
